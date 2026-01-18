@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS TB_LIBRARY(
+    library_id BIGSERIAL PRIMARY KEY,
+    name varchar(255) UNIQUE,
+    description varchar(255),
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_library_to_user FOREIGN KEY (user_id) REFERENCES TB_USER(user_id) ON DELETE CASCADE
+);
