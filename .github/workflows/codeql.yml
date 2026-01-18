@@ -1,0 +1,55 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    
+    # Previne loop infinito: não roda se o commit for do SonarCloud
+    if: ${{ !contains(github.event.head_commit.message, 'Add SonarCloud workflow') }}
+    
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: 'java-kotlin'
+            build-mode: 'autobuild'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # --- CORREÇÃO DO ERRO DE COMPILAÇÃO ---
+    # Instala Java 21 (LTS) se for projeto Java/Kotlin.
+    # Isso resolve o erro "release version 21 not supported" visto nos logs.
+    - name: Setup Java for CodeQL
+      if: matrix.language == 'java-kotlin'
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+    
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
